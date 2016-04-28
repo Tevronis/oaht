@@ -9,9 +9,12 @@ using namespace std;
 
 namespace open_addressing_hash_table
 {
+	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
+	class oaht;
+
 	using std::size_t;
 
-	enum class node_state {
+	enum node_state {
 		NEVER_USED,
 		USED,
 		ERASED
@@ -21,20 +24,17 @@ namespace open_addressing_hash_table
 	struct node {
 		_Key key;
 		_Value value;
-		node_state state = node_state::NEVER_USED;
+		node_state state;
 	};
 
 	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
 	class hash_iterator : public std::iterator<std::input_iterator_tag, node<_Key, _Value>>
 	{
-		template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
-		friend class oaht;
 	public:
 		hash_iterator(const hash_iterator& it) : p(it.p) {
 		}
 
-		hash_iterator(node<_Key, _Value> *p, oaht<_Key, _Value> *const oaht_data) : p(p) {
-			oaht_ = oaht_data;
+		hash_iterator(node<_Key, _Value> *p, oaht<_Key, _Value> *const oaht_data) : p(p), oaht_(oaht_data) {
 		}
 
 		bool operator!=(hash_iterator const& other) const {
@@ -53,7 +53,7 @@ namespace open_addressing_hash_table
 			do {
 				++p;
 			} while (*this != oaht_->end() && p->state != node_state::USED);
-			
+
 			return *this;
 		}
 
@@ -80,8 +80,8 @@ namespace open_addressing_hash_table
 
 		size_t get_start_index() {
 			for (int i = 0; i < capacity; ++i)
-				if (nodes[i].state == node_state::USED)
-					return i;
+			if (nodes[i].state == node_state::USED)
+				return i;
 
 			return (capacity - 1);
 		}
@@ -96,7 +96,11 @@ namespace open_addressing_hash_table
 				nodes[i] = node<_Key, _Value>();
 		}
 
-		oaht() : oaht(3) {
+		oaht() : capacity(3), size_oaht(0) {
+			nodes = new node<_Key, _Value>[capacity];
+
+			for (size_t i = 0; i < capacity; i++)
+				nodes[i] = node<_Key, _Value>();
 		}
 
 		~oaht() {
@@ -142,13 +146,13 @@ namespace open_addressing_hash_table
 			bool result = set(key, index, nodes, capacity);
 			if (result) {
 				size_oaht++;
-				nodes[index].value = _Value();				
+				nodes[index].value = _Value();
 			}
 
 			return nodes[index].value;
 		}
 
-		_Value& operator[](const _Key &key) const {
+		_Value operator[](const _Key &key) const {
 			return nodes[get_index(key, capacity)].value;
 		}
 
@@ -160,7 +164,7 @@ namespace open_addressing_hash_table
 			size_t index = get_index(key, capacity);
 
 			for (size_t d = 0; d < capacity; d++) {
-				if (nodes[index].state == node_state::NEVER_USED)
+				if (nodes[index].state == node_state::NEVER_USED || nodes[index].state == node_state::ERASED)
 					return 0;
 				if (nodes[index].state == node_state::USED && nodes[index].key == key)
 					return 1;
@@ -204,7 +208,7 @@ namespace open_addressing_hash_table
 			for (size_t i = 0; i < capacity; i++)
 				nodes[i] = node<_Key, _Value>();
 		}
-		
+
 		void swap(const oaht<_Key, _Value> & _Oaht) {
 			oaht<_Key, _Value> n_oaht = this;
 			this = _Oaht;
@@ -223,15 +227,16 @@ namespace open_addressing_hash_table
 			size_t n_capacity = (capacity << 1);	// capacity * 2
 
 			node<_Key, _Value>* n_nodes = new node<_Key, _Value>[n_capacity];	// create new buckets
+			
 			for (size_t i = 0; i < n_capacity; ++i)
 				n_nodes[i] = node<_Key, _Value>();
 
 			for (size_t i = 0; i < capacity; ++i)
-				if (nodes[i].state == node_state::USED) {
-					size_t index;
-					set(nodes[i].key, index, n_nodes, n_capacity);
-					n_nodes[index].value = nodes[i].value;
-				}
+			if (nodes[i].state == node_state::USED) {
+				size_t index;
+				set(nodes[i].key, index, n_nodes, n_capacity);
+				n_nodes[index].value = nodes[i].value;
+			}
 
 			delete[] nodes;
 

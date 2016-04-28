@@ -23,16 +23,17 @@ void main_functional()
 	for (size_t i = 0; i < N; i++)
 		m[mas[i]] = i;
 
-	
+	int cnt = 0;
 	/*oaht<string, string> m;
 	for (size_t i = 0; i < N; i++)
 		m[s[i]] = s[i] + "test";*/
 	
 
 	cout << "all element [a.begin(); a.end()]:" << endl;
-	for (auto it = m.begin(); it != m.end(); ++it)
+	for (auto it = m.begin(); it != m.end(); ++it) {
 		cout << (*it).value << endl;
-
+		cnt++;
+	}
 	cout << "all element [a.rbegin(); a.rend()]:" << endl;
 	for (auto it = m.rbegin(); it != m.rend(); --it)
 		cout << (*it).value << endl;
