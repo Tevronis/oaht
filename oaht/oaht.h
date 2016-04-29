@@ -79,7 +79,7 @@ namespace open_addressing_hash_table
 		_Hash h;
 
 		size_t get_start_index() {
-			for (int i = 0; i < capacity; ++i)
+			for (size_t i = 0; i < capacity; ++i)
 			if (nodes[i].state == node_state::USED)
 				return i;
 
@@ -164,7 +164,7 @@ namespace open_addressing_hash_table
 			size_t index = get_index(key, capacity);
 
 			for (size_t d = 0; d < capacity; d++) {
-				if (nodes[index].state == node_state::NEVER_USED || nodes[index].state == node_state::ERASED)
+				if (nodes[index].state == node_state::NEVER_USED)
 					return 0;
 				if (nodes[index].state == node_state::USED && nodes[index].key == key)
 					return 1;
@@ -182,8 +182,18 @@ namespace open_addressing_hash_table
 		void erase(const _Key &key) {
 			size_t index = get_index(key, capacity);
 
-			nodes[index].state = node_state::ERASED;
-			--size_oaht;
+			for (size_t d = 0; d < capacity; d++) {
+				if (nodes[index].state == node_state::NEVER_USED)
+					return;
+				if (nodes[index].state == node_state::USED && nodes[index].key == key) {
+					nodes[index].state = node_state::ERASED;
+					--size_oaht;
+					return;
+				}
+				index++;
+				if (index == capacity)
+					index = 0;
+			}
 		}
 
 		_Value& at(const _Key& _Keyval) {	// find element matching _Keyval
