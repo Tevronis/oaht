@@ -8,79 +8,47 @@
 #include <cassert>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 using namespace std;
 using namespace open_addressing_hash_table;
 
-const int N = 50;
+const int N = 1000000;
 
 int64_t mas[N];
 string s[N];
 
-void main_functional() 
-{
-	oaht<int64_t, int64_t, std::hash<int64_t>> m;
-	for (size_t i = 0; i < N; i++)
-		m[mas[i]] = i;
 
-	int cnt = 0;
-	/*oaht<string, string> m;
-	for (size_t i = 0; i < N; i++)
-		m[s[i]] = s[i] + "test";*/
-	
+vector<int> initialization() {
+	vector<int> result;
 
-	cout << "all element [a.begin(); a.end()]:" << endl;
-	for (auto it = m.begin(); it != m.end(); ++it) {
-		cout << (*it).value << endl;
-		cnt++;
+	for (size_t i = 0; i < N; i++)
+		result.push_back(rand() * rand());
+
+	return result;
+}
+
+template<typename Map, typename _Key, typename _Value>
+void test(string name) {
+	vector<_Key> vec = initialization();
+
+	clock_t start_clock = clock();
+
+	Map m;
+
+	for (int i = 0; i < N; i++) {
+		m[vec[i]] = vec[i];
 	}
-	cout << "all element [a.rbegin(); a.rend()]:" << endl;
-	for (auto it = m.rbegin(); it != m.rend(); --it)
-		cout << (*it).value << endl;
 
-	cout << "a.begin() -> key:" << endl;
-	auto iter = m.begin();
-	cout << (*iter).key << endl;
-
-	cout << "a.begin() -> value:" << endl;
-	iter = m.begin();
-	cout << (*iter).value << endl;
-
-	cout << "--a.end() -> key:" << endl;
-	iter = m.end();
-	cout << (*(--iter)).key << endl;
-
-	cout << "--a.end() -> value:" << endl;
-	iter = m.end();
-	cout << (*(--iter)).value << endl;
-
-	cout << "map.size(): " << endl;
-	cout << m.size() << endl;
-
-	cout << "map.empty(): " << endl;
-	cout << m.empty() << endl;
-
-	cout << "map.clear(): " << endl;
-	m.clear(); //m.begin == m.end; 0 iterations
-	for (auto it = m.begin(); it != m.end(); ++it)
-		cout << (*it).value << endl;
-
-	cout << "map.size(): " << endl;
-	cout << m.size() << endl;
-
-	cout << "map.empty(): " << endl;
-	cout << m.empty() << endl;
+	cout << name << " " << ((clock() - start_clock) * 1000.0 / CLOCKS_PER_SEC) << endl;
+	//if (name == "oaht")
+		//cout << name << " capasity: " << m.get_capacity() << endl;
 }
 
 int main() {
 
-	for (size_t i = 0; i < N; i++)
-		mas[i] = rand() * rand();
-	s[0] = "oa_";
-	for (size_t i = 1; i < N; i++)
-		s[i] = s[i - 1] + "tst";
+	test<oaht<int, int>, int, int>("oaht");
+	test<map<int, int>, int, int>("map");
 
-	main_functional();
-	
 	return 0;
 }

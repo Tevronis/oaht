@@ -106,7 +106,7 @@ namespace open_addressing_hash_table
 		~oaht() {
 			delete[] nodes;
 		}
-
+#pragma region iterators
 		iterator begin() {
 			if (capacity == 0)
 				return end();
@@ -138,13 +138,15 @@ namespace open_addressing_hash_table
 		const_iterator end() const {
 			return const_iterator(nodes + capacity, this);
 		}
-
+#pragma endregion
+#pragma region access to elements
 		_Value& operator[](const _Key &key) {
 			rehash();
 
 			size_t index;
-			bool result = set(key, index, nodes, capacity);
-			if (result) {
+
+			if (!count(key, index)) {
+				set(key, index, nodes, capacity);
 				size_oaht++;
 				nodes[index].value = _Value();
 			}
@@ -153,28 +155,63 @@ namespace open_addressing_hash_table
 		}
 
 		_Value operator[](const _Key &key) const {
-			return nodes[get_index(key, capacity)].value;
+			size_t index = get_real_index;
+			
+			return nodes[index].value;
 		}
+
+		_Value& at(const _Key& _Keyval) {
+			rehash();
+
+			size_t index;
+			if (!count(key, index)) {
+				set(key, index, nodes, capacity);
+				size_oaht++;
+				nodes[index].value = _Value();
+			}
+
+			return nodes[index].value;
+		}
+#pragma endregion
 
 		size_t size() {
 			return size_oaht;
 		}
 
-		size_t count(const _Key &key) const {
+		size_t get_capacity() {
+			return capacity;
+		}
+#pragma region count
+		bool count(const _Key &key) const {
 			size_t index = get_index(key, capacity);
 
 			for (size_t d = 0; d < capacity; d++) {
 				if (nodes[index].state == node_state::NEVER_USED)
-					return 0;
+					return false;
 				if (nodes[index].state == node_state::USED && nodes[index].key == key)
-					return 1;
+					return true;
 				index++;
 				if (index == capacity)
 					index = 0;
 			}
-			return 0;
+			return false;
 		}
 
+		bool count(const _Key &key, size_t& index) const {
+			index = get_index(key, capacity);
+
+			for (size_t d = 0; d < capacity; d++) {
+				if (nodes[index].state == node_state::NEVER_USED)
+					return false;
+				if (nodes[index].state == node_state::USED && nodes[index].key == key)
+					return true;
+				index++;
+				if (index == capacity)
+					index = 0;
+			}
+			return false;
+		}
+#pragma endregion
 		bool empty() const {
 			return (size_oaht == 0);
 		}
@@ -194,19 +231,6 @@ namespace open_addressing_hash_table
 				if (index == capacity)
 					index = 0;
 			}
-		}
-
-		_Value& at(const _Key& _Keyval) {	// find element matching _Keyval
-			rehash();
-
-			size_t index;
-			bool result = set(key, index, nodes, capacity);
-			if (result) {
-				size_oaht++;
-				nodes[index].value = _Value();
-			}
-
-			return nodes[index].value;
 		}
 
 		void clear() {
@@ -230,13 +254,28 @@ namespace open_addressing_hash_table
 			return (h(key) * 881) % size_oaht;
 		}
 
+		size_t get_real_index(const _Key& key) const {
+			size_t index = get_index(key, capacity);
+
+			for (size_t d = 0; d < capacity; d++) {
+				if (nodes[index].state == node_state::NEVER_USED)
+					return 0;
+				if (nodes[index].state == node_state::USED && nodes[index].key == key)
+					return index;
+				index++;
+				if (index == capacity)
+					index = 0;
+			}
+			return 0;
+		}
+
 		void rehash() {
 			if ((size_oaht << 1) <= capacity)
 				return;
 
-			size_t n_capacity = (capacity << 1);	// capacity * 2
+			size_t n_capacity = (capacity << 1);
 
-			node<_Key, _Value>* n_nodes = new node<_Key, _Value>[n_capacity];	// create new buckets
+			node<_Key, _Value>* n_nodes = new node<_Key, _Value>[n_capacity];
 			
 			for (size_t i = 0; i < n_capacity; ++i)
 				n_nodes[i] = node<_Key, _Value>();
