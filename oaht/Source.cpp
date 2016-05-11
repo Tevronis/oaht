@@ -41,14 +41,18 @@ void test(string name) {
 	}
 
 	cout << name << " " << ((clock() - start_clock) * 1000.0 / CLOCKS_PER_SEC) << endl;
-	//if (name == "oaht")
-		//cout << name << " capasity: " << m.get_capacity() << endl;
 }
 
 int main() {
 
-	test<oaht<int, int>, int, int>("oaht");
-	test<map<int, int>, int, int>("map");
+	//test<oaht<int, int>, int, int>("oaht");
+	//test<map<int, int>, int, int>("map");
+	oaht<int, int> m;
+	m[10] = 1;
+	oaht<int, int> m1;
+	m1 = m;
+	cout << m1[10];
+
 
 	return 0;
 }

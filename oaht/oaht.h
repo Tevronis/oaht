@@ -5,14 +5,13 @@
 #include <stdexcept>
 
 
-using namespace std;
-
 namespace open_addressing_hash_table
 {
 	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
 	class oaht;
 
 	using std::size_t;
+	using open_addressing_hash_table::oaht;
 
 	enum node_state {
 		NEVER_USED,
@@ -69,7 +68,7 @@ namespace open_addressing_hash_table
 		oaht<_Key, _Value>* oaht_;
 	};
 
-	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
+	template<typename _Key, typename _Value, typename _Hash>
 	class oaht {
 	private:
 		size_t capacity;
@@ -103,10 +102,13 @@ namespace open_addressing_hash_table
 				nodes[i] = node<_Key, _Value>();
 		}
 
-		~oaht() {
-			delete[] nodes;
+		oaht(const oaht<_Key, _Value>& _Oaht): nodes(_Oaht.nodes), capacity(_Oaht.capacity), size_oaht(_Oaht.size_oaht){
 		}
-#pragma region iterators
+
+		~oaht() {
+			if (nodes != NULL)
+				delete[] nodes;
+		}
 		iterator begin() {
 			if (capacity == 0)
 				return end();
@@ -138,8 +140,22 @@ namespace open_addressing_hash_table
 		const_iterator end() const {
 			return const_iterator(nodes + capacity, this);
 		}
-#pragma endregion
-#pragma region access to elements
+
+		oaht<_Key, _Value> operator=(const oaht<_Key, _Value>& _Oaht) {
+			size_t n_capacity = _Oaht.capacity;
+			size_t n_size_oaht = _Oaht.size_oaht;
+
+			node<_Key, _Value>* n_nodes = _Oaht.nodes;
+			_Hash n_h = _Oaht.h;
+
+			oaht<_Key, _Value> AOaht;
+			AOaht.nodes = n_nodes;
+			AOaht.capacity = n_capacity;
+			AOaht.h = n_h;
+			AOaht.size_oaht = n_size_oaht;
+			return oaht(AOaht);
+		}
+
 		_Value& operator[](const _Key &key) {
 			rehash();
 
@@ -160,7 +176,7 @@ namespace open_addressing_hash_table
 			return nodes[index].value;
 		}
 
-		_Value& at(const _Key& _Keyval) {
+		_Value& at(const _Key &key) {
 			rehash();
 
 			size_t index;
@@ -172,7 +188,7 @@ namespace open_addressing_hash_table
 
 			return nodes[index].value;
 		}
-#pragma endregion
+
 
 		size_t size() {
 			return size_oaht;
@@ -181,7 +197,7 @@ namespace open_addressing_hash_table
 		size_t get_capacity() {
 			return capacity;
 		}
-#pragma region count
+
 		bool count(const _Key &key) const {
 			size_t index = get_index(key, capacity);
 
@@ -211,7 +227,7 @@ namespace open_addressing_hash_table
 			}
 			return false;
 		}
-#pragma endregion
+
 		bool empty() const {
 			return (size_oaht == 0);
 		}
@@ -243,10 +259,10 @@ namespace open_addressing_hash_table
 				nodes[i] = node<_Key, _Value>();
 		}
 
-		void swap(const oaht<_Key, _Value> & _Oaht) {
+		void swap(const oaht<_Key, _Value> &_Oaht) {
 			oaht<_Key, _Value> n_oaht = this;
 			this = _Oaht;
-			oaht_ = n_oaht;
+			_Oaht = n_oaht;
 		}
 
 	private:
