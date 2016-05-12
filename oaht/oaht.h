@@ -52,11 +52,27 @@ namespace open_addressing_hash_table
 			do {
 				++p;
 			} while (*this != oaht_->end() && p->state != node_state::USED);
+			
+			return *this;
+		}
+
+		hash_iterator& operator++(int) {
+			do {
+				++p;
+			} while (*this != oaht_->end() && p->state != node_state::USED);
 
 			return *this;
 		}
 
 		hash_iterator& operator--() {
+			do {
+				--p;
+			} while (*this != oaht_->rend() && p->state != node_state::USED);
+
+			return *this;
+		}
+
+		hash_iterator& operator--(int) {
 			do {
 				--p;
 			} while (*this != oaht_->rend() && p->state != node_state::USED);
@@ -102,15 +118,22 @@ namespace open_addressing_hash_table
 				nodes[i] = node<_Key, _Value>();
 		}
 
-		oaht(const oaht<_Key, _Value>& _Oaht): nodes(_Oaht.nodes), capacity(_Oaht.capacity), size_oaht(_Oaht.size_oaht){
+		oaht(const oaht<_Key, _Value>& other) {
+			nodes = new node<_Key, _Value>[other.capacity];
+			capacity = other.capacity;
+			h = other.h;
+			size_oaht = other.size_oaht;
+			for (size_t i = 0; i < capacity; ++i)
+				if (other.nodes[i].state == node_state::USED)
+					nodes[i] = other.nodes[i];
 		}
+		
 
 		~oaht() {
-			if (nodes != NULL)
-				delete[] nodes;
+			delete[] nodes;
 		}
 		iterator begin() {
-			if (capacity == 0)
+			if (size_oaht == 0)
 				return end();
 			return iterator(nodes + get_start_index(), this);
 		}
@@ -141,19 +164,36 @@ namespace open_addressing_hash_table
 			return const_iterator(nodes + capacity, this);
 		}
 
-		oaht<_Key, _Value> operator=(const oaht<_Key, _Value>& _Oaht) {
-			size_t n_capacity = _Oaht.capacity;
-			size_t n_size_oaht = _Oaht.size_oaht;
+		iterator find(_Key key) {
+			return iterator(nodes + get_real_index(), this);
+		}
 
-			node<_Key, _Value>* n_nodes = _Oaht.nodes;
-			_Hash n_h = _Oaht.h;
+		oaht<_Key, _Value> &operator=(const oaht<_Key, _Value>& other) {
+			if (this != &other) {
+				delete[] nodes;
+				nodes = new node<_Key, _Value>[other.capacity];
+				capacity = other.capacity;
+				h = other.h;
+				size_oaht = other.size_oaht;
+				for (size_t i = 0; i < capacity; ++i)
+					if (other.nodes[i].state == node_state::USED)
+						nodes[i] = other.nodes[i];
+			}
+			return (*this);
+		}
 
-			oaht<_Key, _Value> AOaht;
-			AOaht.nodes = n_nodes;
-			AOaht.capacity = n_capacity;
-			AOaht.h = n_h;
-			AOaht.size_oaht = n_size_oaht;
-			return oaht(AOaht);
+		bool operator==(const oaht<_Key, _Value>& _Right) const {
+			if (capacity != _Right.capacity)
+				return false;
+			for (size_t i = 0; i < capacity; ++i)
+				if (_Right.nodes[i].state == node_state::USED && 
+					nodes[i].key != _Right.nodes[i].key && nodes[i].value != _Right.nodes[i].value)
+							return false;
+			return true;
+		}
+
+		bool operator!=(const oaht<_Key, _Value>& _Right) const {
+			return !(*this == _Right);
 		}
 
 		_Value& operator[](const _Key &key) {
@@ -259,9 +299,9 @@ namespace open_addressing_hash_table
 				nodes[i] = node<_Key, _Value>();
 		}
 
-		void swap(const oaht<_Key, _Value> &_Oaht) {
-			oaht<_Key, _Value> n_oaht = this;
-			this = _Oaht;
+		void swap(oaht<_Key, _Value> &_Oaht) {
+			oaht<_Key, _Value> n_oaht(*this);
+			*this = _Oaht;
 			_Oaht = n_oaht;
 		}
 

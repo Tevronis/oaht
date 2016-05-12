@@ -47,11 +47,27 @@ int main() {
 
 	//test<oaht<int, int>, int, int>("oaht");
 	//test<map<int, int>, int, int>("map");
+	
+	/*map<int, int> n;
+	n[10] = 1;
+	map<int, int> n1;
+	cout << n1[10];*/
+
 	oaht<int, int> m;
 	m[10] = 1;
+	m[100] = 9;
+	m[5] = 42;
 	oaht<int, int> m1;
-	m1 = m;
-	cout << m1[10];
+
+	//m1 = m;
+
+	if (m1 != m)
+		cout << "cool!" << endl;
+	
+	for (auto it = m.begin(); it != m.end(); it++)
+		cout << "m: "<< (*it).value << endl;
+	for (auto it = m1.begin(); it != m1.end(); it++)
+		cout << "m1: " << (*it).value << endl;
 
 
 	return 0;
