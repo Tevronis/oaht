@@ -1,121 +1,136 @@
-#pragma once
-
 #include <iostream>
 #include <cstddef>
 #include <stdexcept>
 
+/*
+	methods on  oaht class:
+	-> oaht(capacity)
+	-> oaht()
+	-> oaht(const oaht<_Key, _Value>& other)
+	-> iterator begin() 
+	-> iterator end() 
+	-> iterator rbegin() 
+	-> iterator rend() 
+	-> const_iterator rbegin() const
+	-> const_iterator rend() const
+	-> const_iterator begin() const
+	-> const_iterator end() const 
+	-> iterator find(_Key key) 
+	-> oaht<_Key, _Value>&operator = (const oaht<_Key, _Value>&other)
+	-> bool operator == (const oaht<_Key, _Value>& _Right) const 
+	-> bool operator != (const oaht<_Key, _Value>& _Right) const 
+	-> _Value& operator[](const _Key &key)
+	-> _Value operator[](const _Key &key) const 
+	-> _Value& at(const _Key &key)
+	-> size_t size()
+	-> size_t get_capacity()
+	-> bool count(const _Key &key) const 
+	-> bool count(const _Key &key, size_t& index) const
+	-> bool empty() const
+	-> void erase(const _Key &key)
+	-> void clear() 
+	-> void swap(oaht<_Key, _Value> &_Oaht)
+*/
 
-namespace open_addressing_hash_table
-{
-	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
-	class oaht;
-
+namespace open_addressing_hash_table {
 	using std::size_t;
-	using open_addressing_hash_table::oaht;
 
 	enum node_state {
-		NEVER_USED,
-		USED,
-		ERASED
+		NEVER_USED, USED, ERASED
 	};
 
 	template<typename _Key, typename _Value>
 	struct node {
 		_Key key;
 		_Value value;
-		node_state state;
+		node_state state = NEVER_USED;
 	};
 
-	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key>>
-	class hash_iterator : public std::iterator<std::input_iterator_tag, node<_Key, _Value>>
-	{
-	public:
-		hash_iterator(const hash_iterator& it) : p(it.p) {
-		}
-
-		hash_iterator(node<_Key, _Value> *p, oaht<_Key, _Value> *const oaht_data) : p(p), oaht_(oaht_data) {
-		}
-
-		bool operator!=(hash_iterator const& other) const {
-			return p != other.p;
-		}
-
-		bool operator==(hash_iterator const& other) const {
-			return p == other.p;
-		}
-
-		typename hash_iterator::reference operator*() const {
-			return *p;
-		}
-
-		hash_iterator& operator++() {
-			do {
-				++p;
-			} while (*this != oaht_->end() && p->state != node_state::USED);
-			
-			return *this;
-		}
-
-		hash_iterator& operator++(int) {
-			do {
-				++p;
-			} while (*this != oaht_->end() && p->state != node_state::USED);
-
-			return *this;
-		}
-
-		hash_iterator& operator--() {
-			do {
-				--p;
-			} while (*this != oaht_->rend() && p->state != node_state::USED);
-
-			return *this;
-		}
-
-		hash_iterator& operator--(int) {
-			do {
-				--p;
-			} while (*this != oaht_->rend() && p->state != node_state::USED);
-
-			return *this;
-		}
-	private:
-		node<_Key, _Value>* p;
-		oaht<_Key, _Value>* oaht_;
-	};
-
-	template<typename _Key, typename _Value, typename _Hash>
+	template<typename _Key, typename _Value, typename _Hash = std::hash<_Key> >
 	class oaht {
 	private:
 		size_t capacity;
 		size_t size_oaht;
 
-		node<_Key, _Value>* nodes;
+		node<_Key, _Value> *nodes;
 		_Hash h;
 
-		size_t get_start_index() {
-			for (size_t i = 0; i < capacity; ++i)
-			if (nodes[i].state == node_state::USED)
-				return i;
+#ifndef __GNUC__
+#pragma region
+#endif
+		template<typename _KeyI, typename _ValueI>
+		class hash_iterator
+			: public std::iterator<std::input_iterator_tag,
+			node<_KeyI, _ValueI> > {
+		public:
+			hash_iterator(const hash_iterator& it) : p(it.p) {
+			}
 
-			return (capacity - 1);
-		}
+			hash_iterator(node<_KeyI, _ValueI> *p, oaht<_KeyI, _ValueI> * const oaht_data) : p(p), oaht_(oaht_data) {
+			}
+
+			bool operator != (hash_iterator const & other) const {
+				return p != other.p;
+			}
+
+			bool operator == (hash_iterator const & other) const {
+				return p == other.p;
+			}
+
+			typename hash_iterator::reference operator*() const {
+				return *p;
+			}
+
+			hash_iterator& operator++() {
+				do {
+					++p;
+				} while (*this != oaht_->end() && p->state != node_state::USED);
+
+				return *this;
+			}
+
+			hash_iterator& operator++(int) {
+				do {
+					++p;
+				} while (*this != oaht_->end() && p->state != node_state::USED);
+
+				return *this;
+			}
+
+			hash_iterator& operator--() {
+				do {
+					--p;
+				} while (*this != oaht_->rend() && p->state != node_state::USED);
+
+				return *this;
+			}
+
+			hash_iterator& operator--(int) {
+				do {
+					--p;
+				} while (*this != oaht_->rend() && p->state != node_state::USED);
+
+				return *this;
+			}
+
+		private:
+			node<_KeyI, _ValueI> *p;
+			oaht<_KeyI, _ValueI> *oaht_;
+		};
+#ifndef __GNUC__
+#pragma endregion
+#endif
+
 	public:
 		typedef hash_iterator<_Key, _Value> iterator;
-		typedef hash_iterator<const _Key, const _Value> const_iterator;
+		typedef hash_iterator< const _Key, const _Value> const_iterator;
 
 		oaht(size_t capacity) : capacity(capacity), size_oaht(0) {
 			nodes = new node<_Key, _Value>[capacity];
-
-			for (size_t i = 0; i < capacity; i++)
-				nodes[i] = node<_Key, _Value>();
 		}
 
 		oaht() : capacity(3), size_oaht(0) {
 			nodes = new node<_Key, _Value>[capacity];
-
-			for (size_t i = 0; i < capacity; i++)
-				nodes[i] = node<_Key, _Value>();
 		}
 
 		oaht(const oaht<_Key, _Value>& other) {
@@ -124,19 +139,20 @@ namespace open_addressing_hash_table
 			h = other.h;
 			size_oaht = other.size_oaht;
 			for (size_t i = 0; i < capacity; ++i)
-				if (other.nodes[i].state == node_state::USED)
-					nodes[i] = other.nodes[i];
+			if (other.nodes[i].state == node_state::USED)
+				nodes[i] = other.nodes[i];
 		}
-		
 
 		~oaht() {
-			delete[] nodes;
+			delete[]nodes;
 		}
+
 		iterator begin() {
 			if (size_oaht == 0)
 				return end();
 			return iterator(nodes + get_start_index(), this);
 		}
+
 		iterator end() {
 			return iterator(nodes + capacity, this);
 		}
@@ -144,6 +160,7 @@ namespace open_addressing_hash_table
 		iterator rbegin() {
 			return iterator(nodes + capacity - 1, this);
 		}
+
 		iterator rend() {
 			return iterator(nodes - 1, this);
 		}
@@ -151,6 +168,7 @@ namespace open_addressing_hash_table
 		const_iterator rbegin() const {
 			return const_iterator(nodes + capacity - 1, this);
 		}
+
 		const_iterator rend() const {
 			return const_iterator(nodes - 1, this);
 		}
@@ -160,39 +178,39 @@ namespace open_addressing_hash_table
 				return end();
 			return const_iterator(nodes + get_start_index(), this);
 		}
+
 		const_iterator end() const {
 			return const_iterator(nodes + capacity, this);
 		}
 
 		iterator find(_Key key) {
-			return iterator(nodes + get_real_index(), this);
+			return iterator(nodes + get_real_index(key), this);
 		}
 
-		oaht<_Key, _Value> &operator=(const oaht<_Key, _Value>& other) {
+		oaht<_Key, _Value>&operator = (const oaht<_Key, _Value>&other) {
 			if (this != &other) {
-				delete[] nodes;
+				delete[]nodes;
 				nodes = new node<_Key, _Value>[other.capacity];
 				capacity = other.capacity;
 				h = other.h;
 				size_oaht = other.size_oaht;
 				for (size_t i = 0; i < capacity; ++i)
-					if (other.nodes[i].state == node_state::USED)
-						nodes[i] = other.nodes[i];
+				if (other.nodes[i].state == node_state::USED)
+					nodes[i] = other.nodes[i];
 			}
 			return (*this);
 		}
 
-		bool operator==(const oaht<_Key, _Value>& _Right) const {
+		bool operator == (const oaht<_Key, _Value>& _Right) const {
 			if (capacity != _Right.capacity)
 				return false;
 			for (size_t i = 0; i < capacity; ++i)
-				if (_Right.nodes[i].state == node_state::USED && 
-					nodes[i].key != _Right.nodes[i].key && nodes[i].value != _Right.nodes[i].value)
-							return false;
+			if (_Right.nodes[i].state == node_state::USED && nodes[i].key != _Right.nodes[i].key && nodes[i].value != _Right.nodes[i].value)
+				return false;
 			return true;
 		}
 
-		bool operator!=(const oaht<_Key, _Value>& _Right) const {
+		bool operator != (const oaht<_Key, _Value>& _Right) const {
 			return !(*this == _Right);
 		}
 
@@ -212,7 +230,7 @@ namespace open_addressing_hash_table
 
 		_Value operator[](const _Key &key) const {
 			size_t index = get_real_index;
-			
+
 			return nodes[index].value;
 		}
 
@@ -228,7 +246,6 @@ namespace open_addressing_hash_table
 
 			return nodes[index].value;
 		}
-
 
 		size_t size() {
 			return size_oaht;
@@ -290,17 +307,14 @@ namespace open_addressing_hash_table
 		}
 
 		void clear() {
-			delete[] nodes;
+			delete[]nodes;
 			capacity = 0;
 			size_oaht = 0;
 			nodes = new node<_Key, _Value>[capacity];
-
-			for (size_t i = 0; i < capacity; i++)
-				nodes[i] = node<_Key, _Value>();
 		}
 
 		void swap(oaht<_Key, _Value> &_Oaht) {
-			oaht<_Key, _Value> n_oaht(*this);
+			oaht<_Key, _Value>n_oaht(*this);
 			*this = _Oaht;
 			_Oaht = n_oaht;
 		}
@@ -308,6 +322,14 @@ namespace open_addressing_hash_table
 	private:
 		size_t get_index(const _Key& key, size_t size_oaht) const {
 			return (h(key) * 881) % size_oaht;
+		}
+
+		size_t get_start_index() {
+			for (size_t i = 0; i < capacity; ++i)
+			if (nodes[i].state == node_state::USED)
+				return i;
+
+			return (capacity - 1);
 		}
 
 		size_t get_real_index(const _Key& key) const {
@@ -318,6 +340,7 @@ namespace open_addressing_hash_table
 					return 0;
 				if (nodes[index].state == node_state::USED && nodes[index].key == key)
 					return index;
+
 				index++;
 				if (index == capacity)
 					index = 0;
@@ -331,10 +354,7 @@ namespace open_addressing_hash_table
 
 			size_t n_capacity = (capacity << 1);
 
-			node<_Key, _Value>* n_nodes = new node<_Key, _Value>[n_capacity];
-			
-			for (size_t i = 0; i < n_capacity; ++i)
-				n_nodes[i] = node<_Key, _Value>();
+			node<_Key, _Value> *n_nodes = new node<_Key, _Value>[n_capacity];
 
 			for (size_t i = 0; i < capacity; ++i)
 			if (nodes[i].state == node_state::USED) {
@@ -343,17 +363,19 @@ namespace open_addressing_hash_table
 				n_nodes[index].value = nodes[i].value;
 			}
 
-			delete[] nodes;
+			delete[]nodes;
 
 			nodes = n_nodes;
 			capacity = n_capacity;
 		}
 
-		bool set(const _Key& key, size_t& index, node<_Key, _Value>* nodes, size_t nodes_length) {
+		bool set(const _Key& key, size_t& index, node<_Key, _Value> * nodes,
+			size_t nodes_length) {
 			index = get_index(key, nodes_length);
 
 			for (size_t i = 0; i < nodes_length; i++) {
-				if (nodes[index].state == node_state::NEVER_USED || nodes[index].state == node_state::ERASED) {
+				if (nodes[index].state == node_state::NEVER_USED ||
+					nodes[index].state == node_state::ERASED) {
 					nodes[index].key = key;
 					nodes[index].state = node_state::USED;
 					return true;
