@@ -229,7 +229,7 @@ namespace open_addressing_hash_table {
 		}
 
 		_Value operator[](const _Key &key) const {
-			size_t index = get_real_index;
+			size_t index = get_real_index(key);
 
 			return nodes[index].value;
 		}
