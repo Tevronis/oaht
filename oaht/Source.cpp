@@ -97,7 +97,7 @@ void testOaht()
 	//srand(0);
 	size_t s = clock();
 	ull sum = 0;
-	open_addressing_hash_table::oaht<ull, ull, hash_ull> m(2 * N);
+	open_addressing_hash_table::oaht<ull, ull, hash_ull> m;
 	for (int i = 0; i < N; i++)
 	{
 		ull item = rnd();
@@ -118,7 +118,7 @@ void testOaht()
 
 int main()
 {
-	testStdMap();
-	testStdUnorderedMap();
+	//testStdMap();
+	//testStdUnorderedMap();
 	testOaht();
 }
