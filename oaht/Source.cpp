@@ -120,5 +120,14 @@ int main()
 {
 	//testStdMap();
 	//testStdUnorderedMap();
-	testOaht();
+	//testOaht();
+	open_addressing_hash_table::oaht<int, int> m1;
+	m1[12] = 4;
+	m1[64] = -3;
+	const open_addressing_hash_table::oaht<int, int> m(m1);
+	auto it = m1.begin();
+	//cout << m.begin()->second << endl;
+	//for (auto it = m.begin(); it != m.end(); it++)
+		//cout << it->second << endl;
+	
 }

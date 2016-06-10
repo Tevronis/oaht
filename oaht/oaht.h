@@ -42,7 +42,7 @@ namespace open_addressing_hash_table {
 #pragma pack(push, 1)
 	template<typename _Key, typename _Value>
 	struct node {
-		char state = 0;
+		char state = NEVER_USED;
 		_Key first;
 		_Value second;
 	};
@@ -135,12 +135,8 @@ namespace open_addressing_hash_table {
 			nodes = new node<_Key, _Value>[capacity];
 		}
 
-		oaht() : capacity(3), size_oaht(0) {
+		oaht() : capacity(4), size_oaht(0) {
 			nodes = new node<_Key, _Value>[capacity];
-			
-			//std::cout << "node_state: " << sizeof(node_state) << endl;
-			//std::cout << "key: " << sizeof(_Key) << endl;
-			std::cout << "node: " << sizeof(node<_Key, _Value>) << endl;
 		}
 
 		oaht(const oaht<_Key, _Value>& other) {
